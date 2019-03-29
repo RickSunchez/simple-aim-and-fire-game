@@ -1,0 +1,200 @@
+<script>
+window.onload = function () {
+	canvas = document.createElement('canvas');
+	canvas.width = document.body.offsetWidth;
+	canvas.height = document.body.offsetHeight;
+	
+	document.body.appendChild(canvas);
+	
+	context = canvas.getContext('2d');
+	
+	dx = 0;
+	dy = 0;
+	strength = 10;
+	maxStrength = 20;
+	ds = 0.3;
+	isDown = false;
+	
+	canon1 = new canon(0,canvas.height-200,context);
+	gd = new grid;
+	strengthBar1 = new strengthBar(strength,context,canon1.mp.x,canon1.mp.y+50);
+	target1 = new target(context,canvas.width/2,canvas.height/2);
+	
+	setInterval(update,10);
+	}
+window.onclick = function () {
+	if ('ammo1' in window) return false;
+	ammo1 = new ammo(canon1.ammoAppear.x, canon1.ammoAppear.y, context);
+	dx = strength*Math.cos(canon1.angle);
+	dy = strength*Math.sin(canon1.angle);
+	}
+window.onmousemove = function () {
+	//console.log(event.clientX, event.clientY);
+	var a = event.clientX - canon1.mp.x;
+	var b = canon1.mp.y - event.clientY;
+	var c = Math.sqrt(a*a+b*b)
+	var ang = -Math.acos(a/c);
+	//console.log(ang);
+	//ang = -90*Math.PI/180; //fix angle while test
+	if (event.clientY > canon1.mp.y) ang = -ang;
+	canon1.angle = ang;
+	}
+window.onmousedown = function() {
+	isDown = true;
+	}
+function update() {
+	context.clearRect(0,0,canvas.width,canvas.height);
+	
+	try {
+		dy += 0.2;
+		ammo1.dx = dx;
+		ammo1.dy = dy;
+		
+		ammo1.x += ammo1.dx;
+		ammo1.y += ammo1.dy;
+		
+		if ((Math.pow(target1.x-ammo1.x,2)+Math.pow(target1.y-ammo1.y,2)) < (Math.pow(target1.radius,2))) {target1.x = Math.random()*(canvas.width-100)+100; target1.y = Math.random()*(canvas.height-100)+100;}
+	
+		ammo1.draw()
+		isDown = false;
+		if (ammo1.x > canvas.width) {delete ammo1; strength = maxStrength/2; ds = 0.3;}
+		if (ammo1.y > canvas.height) {delete ammo1; strength = maxStrength/2; ds = 0.3;}
+		} catch(e) {dx = 0; dy = 0;};
+	if (isDown) {
+		strength += ds;
+		if (strength > maxStrength) ds = -ds;
+		if (strength < 0)  ds = -ds;
+		};
+	strengthBar1.per = strength/maxStrength;
+	
+	canon1.draw();
+	strengthBar1.draw();
+	target1.draw();
+	//gd.draw(canon1.x,canon1.y+125);
+	}
+function canon(x,y,CONTEXT) {
+	this.x = x;
+	this.y = y;
+	this.angle = 0;
+	this.ctx = CONTEXT;
+	var radius = 50; 
+	var mainPoint = {x: this.x+1.5*radius, y: this.y+2*radius};
+	this.ammoAppear = {x: this.x + 5*radius, y: this.y + radius};
+	this.mp = mainPoint;
+	
+	this.draw = function () {
+		var arcCenter = {x: Math.ceil(mainPoint.x + Math.cos(this.angle+Math.PI+1.0792)*radius*Math.sqrt(1.25))+1, y:  Math.floor(mainPoint.y + Math.sin(this.angle+Math.PI+1.0792)*radius*Math.sqrt(1.25))};
+		var p1 = {x: mainPoint.x + Math.cos(this.angle)*(radius/2), y: mainPoint.y + Math.sin(this.angle)*(radius/2)};
+		var p2 = {x: mainPoint.x + Math.cos(this.angle-0.1422)*5*radius*Math.sqrt(0.5), y: mainPoint.y + Math.sin(this.angle-0.1422)*5*radius*Math.sqrt(0.5)};
+		var p3 = {x: mainPoint.x + Math.cos(this.angle-0.4050)*radius*Math.sqrt(14.5), y: mainPoint.y + Math.sin(this.angle-0.4050)*radius*Math.sqrt(14.5)};
+		var p4 = {x: mainPoint.x + Math.cos(this.angle-1.3259)*radius*Math.sqrt(4.25), y: mainPoint.y + Math.sin(this.angle-1.3259)*radius*Math.sqrt(4.25)};
+		var p5 = {x: mainPoint.x + Math.cos(this.angle-Math.PI+1.3259)*radius*Math.sqrt(4.25), y: mainPoint.y + Math.sin(this.angle-Math.PI+1.3259)*radius*Math.sqrt(4.25)};
+		
+		this.ctx.beginPath();
+		this.ctx.arc(arcCenter.x, arcCenter.y, radius, 1.5*Math.PI+this.angle, 0.5*Math.PI+this.angle, true);
+		this.ctx.lineTo(p1.x, p1.y);
+		this.ctx.lineTo(p2.x, p2.y);
+		this.ctx.lineTo(p3.x, p3.y);
+		this.ctx.lineTo(p4.x, p4.y);
+		this.ctx.lineTo(p5.x, p5.y);
+		this.ctx.fillStyle = "#FFE5A8";
+		this.ctx.fill();
+		this.ctx.closePath();
+		
+		this.ctx.beginPath();
+		this.ctx.arc(mainPoint.x, mainPoint.y, radius/2, 0, 2*Math.PI);
+		this.ctx.fillStyle = "#BFBFBF";
+		this.ctx.fill();
+		this.ctx.closePath();
+		
+		this.ammoAppear = {x: mainPoint.x + Math.cos(this.angle-0.2784)*radius*Math.sqrt(13.25), y: mainPoint.y + Math.sin(this.angle-0.2784)*radius*Math.sqrt(13.25)};
+		}
+	}
+function ammo(x,y,CONTEXT) {
+	this.x = x;
+	this.y = y;
+	this.radius = 20;
+	this.dx = 0;
+	this.dy = 0;
+	this.ctx = CONTEXT;
+	this.draw = function () {
+		this.ctx.beginPath();
+		this.ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
+		this.ctx.fillStyle = "#694B41";
+		this.ctx.fill();
+		this.ctx.closePath();
+		}
+	}
+function strengthBar(val,context,x,y) {
+	this.x = 0 || x;
+	this.y = 0 || y;
+	this.per = val/maxStrength;
+	this.ctx = context;
+	
+	this.draw = function() {
+		this.ctx.beginPath();
+		this.ctx.strokeStyle = "#000000";
+		this.ctx.strokeRect(this.x-1,this.y-1,100+1,20+2);
+		this.ctx.closePath();
+		
+		this.ctx.beginPath();
+		this.ctx.fillStyle = "#00ff00";
+		this.ctx.fillRect(this.x,this.y,this.per*100,20);
+		this.ctx.closePath();
+		}
+	}
+function grid() {
+	this.draw = function (x, y) {
+		for (var i=0;i<6;i++) {
+			context.beginPath();
+			context.moveTo(x+50*i,y);
+			context.lineTo(x+50*i,y-150);
+			context.stroke();
+			context.closePath();
+			}
+		for (var i=0;i<4;i++) {
+			context.beginPath();
+			context.moveTo(x,y-50*i);
+			context.lineTo(x+250,y-50*i);
+			context.stroke();
+			context.closePath();
+			}
+		}
+	}
+function target(context,x,y) {
+	this.x = x;
+	this.y = y;
+	this.radius = 25;
+	this.width  = this.radius*2;
+	this.height = this.radius*2;
+	this.ctx = context;
+	this.draw = function () {
+		this.ctx.beginPath();
+		this.ctx.moveTo(this.x+this.radius, this.y);
+		this.ctx.lineTo(this.x+this.radius, this.y+this.radius*2);
+		this.ctx.moveTo(this.x, this.y+this.radius);
+		this.ctx.lineTo(this.x+this.radius*2, this.y+this.radius);
+		this.ctx.strokeStyle = "#ff0000";
+		this.ctx.stroke();
+		this.ctx.closePath();
+		
+		this.ctx.beginPath();
+		this.ctx.arc(this.x+this.radius, this.y+this.radius, 0.3*this.radius,0,2*Math.PI);
+		this.ctx.strokeStyle = "#ff0000";
+		this.ctx.stroke();
+		this.ctx.closePath();
+		
+		this.ctx.beginPath();
+		this.ctx.arc(this.x+this.radius, this.y+this.radius, 0.6*this.radius,0,2*Math.PI);
+		this.ctx.strokeStyle = "#ff0000";
+		this.ctx.stroke();
+		this.ctx.closePath();
+		
+		this.ctx.beginPath();
+		this.ctx.arc(this.x+this.radius, this.y+this.radius, 0.9*this.radius,0,2*Math.PI);
+		this.ctx.strokeStyle = "#ff0000";
+		this.ctx.stroke();
+		this.ctx.closePath();
+		}
+	}
+</script>
