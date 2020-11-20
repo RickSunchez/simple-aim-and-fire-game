@@ -1,0 +1,60 @@
+<meta charset="utf-8">
+<meta charset="utf-8">
+<style type="text/css">
+	body {
+		margin: 0px;
+		padding: 0px;
+	}
+	canvas {
+		position: absolute;
+		top: 0px;
+		left: 0px;
+	}
+</style>
+<script type="text/javascript" src="scripts/cannon.js"></script>
+<script type="text/javascript" src="scripts/target.js"></script>
+<script type="text/javascript">
+	window.onload = function () {
+		var canvas    = document.createElement('canvas');
+		canvas.width  = document.body.offsetWidth;
+		canvas.height = document.body.clientHeight;
+
+		var sub_canvas = document.createElement('canvas');
+		sub_canvas.width  = document.body.offsetWidth;
+		sub_canvas.height = document.body.clientHeight;
+
+		document.body.appendChild(canvas);
+		document.body.appendChild(sub_canvas);
+		
+		context     = canvas.getContext('2d');
+		sub_context = sub_canvas.getContext('2d');
+
+		var cannon = new Cannon(context, 0, canvas.height-200),
+			target = new Target(context);
+
+		setInterval(update, 10, cannon, target, sub_context);
+	}
+
+	function update(c, t, sub) {
+		let OX = (c.ammo.x <= t.x+c.ammo.dx) && (c.ammo.x >= t.x-c.ammo.dx),
+			OY = (c.ammo.y >= t.y-c.ammo.dx) && (c.ammo.y <= t.y+c.ammo.dx);
+
+		if (OY && OX) {
+			t.re();
+			c.reload();
+			sub.clearRect(0,0,sub.canvas.clientWidth, sub.canvas.clientHeight);
+		}
+		if (c.onFire) {
+			sub.beginPath();
+				sub.fillRect(c.ammo.x, c.ammo.y, 1, 1);
+				sub.arc(c.ammo.x, c.ammo.y, 2,
+					0, Math.PI*2, true);
+				sub.fillStyle = "lime";
+				sub.fill();
+			sub.closePath();
+		}
+
+		c.update();
+		t.draw();
+	}
+</script>
